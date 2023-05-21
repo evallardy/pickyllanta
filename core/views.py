@@ -1,12 +1,27 @@
 from django.shortcuts import render
 import gspread
+import threading
+import time
 from google.auth import credentials
 from google.auth.transport.requests import Request
 from google.oauth2 import service_account
 
 from .models import *
 
-def separa_datos(request, clave, descripcion):
+def leer_hilo():
+    while True:
+        # Obtener la hora actual
+        hora_actual = time.strftime("%H:%M:%S")
+#        print('Ejecuta hilo ' + hora_actual)
+        # Verificar si es hora de ejecutar la función leer
+        if hora_actual == "09:00:00" or hora_actual == "11:01:00":
+            # Llamar a la función leer
+            leer()
+        
+        # Esperar 1 segundo
+        time.sleep(1)
+
+def separa_datos(clave, descripcion):
     separa_datos = {}
     campo = 0
     posicion = 0
@@ -47,7 +62,8 @@ def separa_datos(request, clave, descripcion):
                 separa_datos["marca"] = descripcion[posicion_inicial:]
     return separa_datos
 
-def leer(request):
+def leer():
+    print('Inicia ejecución proceso')
     credenciales = "core/seg/arch/cve/desllantashop-8aaa1edf374f.json"
     scope = ['https://www.googleapis.com/auth/spreadsheets']
     credenciales = service_account.Credentials.from_service_account_file(credenciales, scopes=scope)
@@ -121,7 +137,7 @@ def leer(request):
                 llanta['afiliado'] = value.replace(',', '').replace('$','')
                 registro_completo['afiliado'] = value.replace(',', '').replace('$','')
 
-        datos_creados = separa_datos(request, producto_clave, descripcion)
+        datos_creados = separa_datos(producto_clave, descripcion)
         registro_completo['ancho'] = datos_creados['ancho']
         registro_completo['alto'] = datos_creados['alto']
         registro_completo['rin'] = datos_creados['rin']
@@ -153,12 +169,12 @@ def leer(request):
             nuevo_registro.save()
             nuevos += 1
     eliminados = Llanta.objects.filter(actualizado = 0).delete()
- #   print('Nuevos ' + str(nuevos))
- #   print('Actualizados ' + str(actualizados))
- #   print('Duplicados ' + str(duplicados))
- #   print('Sin modificación ' + str(sin_modificacion))
- #   print('Total de registros leidos ' + str(total))
- #   print('Eliminados ' + str(eliminados[0]))
+#    print('Nuevos ' + str(nuevos))
+#    print('Actualizados ' + str(actualizados))
+#    print('Duplicados ' + str(duplicados))
+#    print('Sin modificación ' + str(sin_modificacion))
+#    print('Total de registros leidos ' + str(total))
+#    print('Eliminados ' + str(eliminados[0]))
     resultado = {}
     resultado['Nuevos'] = nuevos
     resultado['Actualizados '] = actualizados
@@ -167,12 +183,17 @@ def leer(request):
     resultado['Total de registros leidos'] = total
     resultado['Eliminados'] = eliminados[0]
     resultado['registros_duplicados'] = registros_duplicados
-    return resultado
+#    print('Ejecutó proceso')
+#    return resultado
 
 def index(request):
     template_name = 'core/index.html'
     context = {}
-    if request.method == 'POST':
-        datos = leer(request)
-        context['datos'] = datos
+#    if request.method == 'POST':
+#        datos = leer(request)
+#        context['datos'] = datos
     return render(request, template_name, context=context)
+
+t = threading.Thread(target=leer_hilo)
+t.daemon = True
+t.start()
