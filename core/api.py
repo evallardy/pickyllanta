@@ -41,7 +41,13 @@ def mensaje_api_view(request):
                         message = "Gracias por su preferencia, lo esperamos muy pronto \n\n"
                     else:
                         menu_json = traeJson(comunicacion, nivel)
-                        menu_json['seleccion'] = opcion_sel
+                        if int(opcion_sel) < 10:
+                            numero = f"  {opcion_sel}"
+                        elif int(registro) < 100:
+                            numero = f" {opcion_sel}"
+                        else:
+                            numero = str(opcion_sel)
+                        menu_json['seleccion'] = numero
                         menu_json1 = generaJson(comunicacion, nivel + 1)
                         if nivel == 1:
                             upd_comunicacion = MensajePicky.objects.filter(id=pk).update(opcion1=menu_json, opcion2=menu_json1, nivel=nivel+1)
@@ -99,7 +105,13 @@ def generaJson(comunicacion, nivel):
         if ancho_distinct:
             for ancho in ancho_distinct:
                 registro += 1
-                opciones[registro] = ancho
+                if registro < 10:
+                    numero = f"  {registro}"
+                elif registro < 100:
+                    numero = f" {registro}"
+                else:
+                    numero = str(registro)
+                opciones[numero] = ancho
         opciones['X'] = 'Terminar'
     elif nivel == 2:
         ancho = opcionSeleccionadaT(comunicacion, 1)
@@ -110,7 +122,13 @@ def generaJson(comunicacion, nivel):
         if alto_distinct:
             for alto in alto_distinct:
                 registro += 1
-                opciones[registro] = alto
+                if registro < 10:
+                    numero = f"  {registro}"
+                elif registro < 100:
+                    numero = f" {registro}"
+                else:
+                    numero = str(registro)
+                opciones[numero] = alto
         opciones['R'] = 'Regresar'
         opciones['X'] = 'Terminar'
     elif nivel == 3:
@@ -124,7 +142,13 @@ def generaJson(comunicacion, nivel):
         if rin_distinct:
             for rin in rin_distinct:
                 registro += 1
-                opciones[registro] = rin
+                if registro < 10:
+                    numero = f"  {registro}"
+                elif registro < 100:
+                    numero = f" {registro}"
+                else:
+                    numero = str(registro)
+                opciones[numero] = rin
         opciones['R'] = 'Regresar'
         opciones['X'] = 'Terminar'
     else:
@@ -140,8 +164,14 @@ def generaJson(comunicacion, nivel):
         if llantas_seleccionadas:
             for llanta in llantas_seleccionadas:
                 registro += 1
+                if registro < 10:
+                    numero = f"  {registro}"
+                elif registro < 100:
+                    numero = f" {registro}"
+                else:
+                    numero = str(registro)
 #                opciones[registro] = "*Desc:*  " + llanta.descripcion + "\n*Exist:* " + str(llanta.existencia) + "\n*Precio contado: " + str(llanta.precio_especia_llantashop_pago_efectivo) + "*"
-                opciones[registro] = "*Desc:*  {}\n*Exist:* {}\n*Precio contado: {}*".format(
+                opciones[numero] = "*Desc:*  {}\n*Exist:* {}\n*Precio contado: {}*".format(
                     llanta.descripcion,
                     llanta.existencia,
                     "${:,.2f}".format(llanta.precio_especia_llantashop_pago_efectivo)
@@ -172,7 +202,7 @@ def traeJson(comunicacion, opcion):
 def existeOpcion(menu_json, opcion_sel):
     encontro = False
     for opcion in menu_json['opciones']:
-        if opcion == opcion_sel:
+        if opcion.strip() == opcion_sel.strip():
             encontro = True
             break
     return encontro
